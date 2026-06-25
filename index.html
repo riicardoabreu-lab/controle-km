@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle KM · OIC-9454</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f11;--s1:#18181c;--s2:#222228;--s3:#2a2a32;
+  --b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.13);--b3:rgba(255,255,255,.2);
+  --tx:#f0f0f2;--mu:#8a8a96;--hi:#44444f;
+  --ac:#3b82f6;--ac2:rgba(59,130,246,.15);
+  --gn:#22c55e;--gn2:rgba(34,197,94,.13);
+  --am:#f59e0b;--am2:rgba(245,158,11,.13);
+  --rd:#ef4444;--rd2:rgba(239,68,68,.13);
+  --r:10px;--rl:14px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+.mono{font-family:'JetBrains Mono',monospace}
+.shell{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
+.sidebar{background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.main{padding:1.75rem 2.25rem;max-width:960px}
+.sb-head{padding:1.25rem;border-bottom:1px solid var(--b1)}
+.sb-plate{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:500;letter-spacing:.05em}
+.sb-sub{font-size:11px;color:var(--mu);margin-top:3px}
+.nav{padding:.5rem .625rem;display:flex;flex-direction:column;gap:2px;flex:1}
+.nav-sec{font-size:10px;color:var(--hi);text-transform:uppercase;letter-spacing:.1em;padding:10px 8px 4px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--mu);border:none;background:none;width:100%;text-align:left;transition:all .12s}
+.ni:hover{background:var(--s2);color:var(--tx)}
+.ni.on{background:var(--ac2);color:var(--ac)}
+.ni svg{width:15px;height:15px;flex-shrink:0}
+.sb-foot{padding:1rem 1.25rem;border-top:1px solid var(--b1);margin-top:auto}
+.sync{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--mu)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--hi);flex-shrink:0;transition:background .3s}
+.dot.ok{background:var(--gn)}.dot.spin{animation:blink .7s infinite;background:var(--am)}.dot.err{background:var(--rd)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.panel{display:none}.panel.on{display:block}
+.ph{margin-bottom:1.75rem}
+.pt{font-size:20px;font-weight:600}
+.ps{font-size:13px;color:var(--mu);margin-top:3px}
+.mrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.75rem}
+.mc{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:1rem 1.1rem;transition:border-color .15s}
+.mc:hover{border-color:var(--b2)}
+.ml{font-size:10.5px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+.mv{font-size:24px;font-weight:600;font-family:'JetBrains Mono',monospace;line-height:1}
+.mu2{font-size:10.5px;color:var(--hi);margin-top:4px}
+.mc.bl{border-color:rgba(59,130,246,.35)}.mc.bl .mv{color:var(--ac)}
+.mc.gn{border-color:rgba(34,197,94,.35)}.mc.gn .mv{color:var(--gn)}
+.mc.am{border-color:rgba(245,158,11,.35)}.mc.am .mv{color:var(--am)}
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:1.4rem;margin-bottom:1.1rem}
+.ct{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:1.1rem;font-weight:500}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg3{grid-template-columns:1fr 1fr 1fr}
+.fl{display:flex;flex-direction:column;gap:4px}
+.fl label{font-size:11px;color:var(--mu);font-weight:500;letter-spacing:.02em}
+.fl input,.fl select,.fl textarea{background:var(--bg);border:1px solid var(--b2);border-radius:var(--r);padding:8px 11px;font-size:13px;color:var(--tx);font-family:'Inter',sans-serif;outline:none;width:100%;transition:border-color .13s,box-shadow .13s}
+.fl input:focus,.fl select:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.fl input.mono{font-family:'JetBrains Mono',monospace}
+.lb{background:var(--s2);border-radius:var(--r);padding:12px 14px;grid-column:1/-1}
+.ll{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.lv{font-size:26px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.cr{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.cb{background:var(--s2);border-radius:var(--r);padding:11px 13px}
+.cbl{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.cbv{font-size:19px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.br{display:flex;gap:8px;justify-content:flex-end;margin-top:1.1rem;padding-top:1.1rem;border-top:1px solid var(--b1)}
+.btn{padding:8px 18px;font-size:13px;font-weight:500;border-radius:var(--r);cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--tx);font-family:'Inter',sans-serif;transition:all .12s;display:flex;align-items:center;gap:6px}
+.btn:hover{background:var(--s3);border-color:var(--b3)}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--ac);border-color:var(--ac);color:#fff}
+.btn.pri:hover{opacity:.87;background:var(--ac)}
+.btn.grn{background:var(--gn);border-color:var(--gn);color:#000;font-weight:600}
+.btn.grn:hover{opacity:.87;background:var(--gn)}
+.btn.red{background:var(--rd2);border-color:var(--rd);color:var(--rd)}
+.btn.red:hover{background:var(--rd);color:#fff}
+.btn:disabled{opacity:.35;pointer-events:none}
+/* filtros */
+.filter-bar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:flex-end}
+.filter-bar .fl{flex:1;min-width:120px}
+.filter-bar input,.filter-bar select{padding:7px 10px;font-size:12px}
+/* tabela */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;padding:0 10px 9px;text-align:left;border-bottom:1px solid var(--b1);font-weight:500;white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--b1);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.018)}
+.tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
+.tbl{background:var(--ac2);color:var(--ac)}.tgn{background:var(--gn2);color:var(--gn)}
+.tam{background:var(--am2);color:var(--am)}.trd{background:var(--rd2);color:var(--rd)}
+/* botão apagar linha */
+.del-btn{background:none;border:none;cursor:pointer;color:var(--hi);padding:3px 6px;border-radius:5px;font-size:14px;transition:all .12s;line-height:1}
+.del-btn:hover{color:var(--rd);background:var(--rd2)}
+/* modal confirmação */
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center}
+#modal.on{display:flex}
+.modal-box{background:var(--s1);border:1px solid var(--b2);border-radius:var(--rl);padding:1.75rem;max-width:380px;width:90%;text-align:center}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:8px}
+.modal-sub{font-size:13px;color:var(--mu);margin-bottom:1.5rem;line-height:1.5}
+.modal-btns{display:flex;gap:10px;justify-content:center}
+.cw{position:relative;width:100%;height:250px}
+#toast{position:fixed;bottom:24px;right:24px;padding:10px 18px;background:var(--s1);border:1px solid var(--b2);border-radius:30px;font-size:13px;color:var(--tx);box-shadow:0 8px 28px rgba(0,0,0,.5);opacity:0;transform:translateY(8px);transition:all .22s;pointer-events:none;z-index:999;display:flex;align-items:center;gap:8px}
+#toast.on{opacity:1;transform:translateY(0)}
+/* auth */
+#auth{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;padding:2rem}
+.auth-card{background:var(--s1);border:1px solid var(--b2);border-radius:20px;padding:2.5rem;max-width:460px;width:100%;text-align:center}
+.auth-icon{font-size:44px;margin-bottom:1rem}
+.auth-title{font-size:19px;font-weight:600;margin-bottom:.5rem}
+.auth-sub{font-size:13px;color:var(--mu);line-height:1.6;margin-bottom:1.5rem}
+.auth-btn{width:100%;padding:12px;font-size:14px;font-weight:600;border-radius:12px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:opacity .15s;margin-bottom:10px}
+.ab-pri{background:var(--ac);color:#fff}
+.ab-sec{background:var(--s2);border:1px solid var(--b2);color:var(--mu);font-size:13px}
+.ab-pri:hover,.ab-sec:hover{opacity:.85}
+/* config */
+.step{display:flex;gap:14px;padding:1.1rem 0;border-bottom:1px solid var(--b1)}
+.step:last-child{border-bottom:none}
+.sn{width:26px;height:26px;border-radius:50%;background:var(--ac2);color:var(--ac);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.sb2{flex:1;font-size:13px;color:var(--mu);line-height:1.65}
+.st{font-size:13.5px;font-weight:600;color:var(--tx);margin-bottom:4px}
+pre.code{background:var(--bg);border:1px solid var(--b2);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#7dd3a8;overflow-x:auto;white-space:pre;margin-top:8px;max-height:320px}
+.url-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.url-row input{background:var(--bg);border:1px solid var(--b2);border-radius:8px;padding:8px 11px;font-size:12px;color:var(--tx);font-family:'JetBrains Mono',monospace;flex:1;min-width:240px;outline:none}
+.url-row input:focus{border-color:var(--ac)}
+#test-res{margin-top:8px;font-size:12px}
+/* resumo limpar */
+.danger-zone{background:var(--rd2);border:1px solid var(--rd);border-radius:var(--r);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:1rem}
+.dz-text{font-size:13px;color:var(--tx)}
+.dz-sub{font-size:11.5px;color:var(--mu);margin-top:2px}
+@media(max-width:700px){
+  .shell{grid-template-columns:1fr}.sidebar{display:none}
+  .main{padding:1.1rem}.fg,.fg3,.cr{grid-template-columns:1fr}.mrow{grid-template-columns:1fr 1fr}
+  .filter-bar{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="auth-card">
+    <div class="auth-icon">🚗</div>
+    <div class="auth-title">Controle KM · OIC-9454</div>
+    <div class="auth-sub">Cole a URL do seu Apps Script para sincronizar com a planilha. Se ainda não configurou, entre sem URL e veja as instruções em Configuração.</div>
+    <input id="url-auth" type="url" placeholder="https://script.google.com/macros/s/.../exec"
+      style="background:var(--bg);border:1px solid var(--b2);border-radius:10px;padding:11px 14px;font-size:12px;color:var(--tx);font-family:'JetBrains Mono',monospace;outline:none;width:100%;margin-bottom:12px">
+    <button class="auth-btn ab-pri" onclick="conectar()">Conectar e entrar</button>
+    <button class="auth-btn ab-sec" onclick="entrarSem()">Entrar sem sincronização</button>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAÇÃO -->
+<div id="modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">Confirmar exclusão</div>
+    <div class="modal-sub" id="modal-sub">Tem certeza? Esta ação não pode ser desfeita.</div>
+    <div class="modal-btns">
+      <button class="btn" onclick="fecharModal()">Cancelar</button>
+      <button class="btn red" id="modal-ok">Apagar</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell" id="app" style="display:none">
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div style="font-size:22px;margin-bottom:5px">🚗</div>
+      <div class="sb-plate">OIC-9454</div>
+      <div class="sb-sub">Ford Fiesta · Ricardo</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-sec">Registro</div>
+      <button class="ni on" onclick="ir('desl',this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M12 5l7 7-7 7"/></svg>Deslocamento
+      </button>
+      <button class="ni" onclick="ir('abast',this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 22V4a1 1 0 011-1h8a1 1 0 011 1v8h2a2 2 0 012 2v5a2 2 0 01-4 0V14h-2"/><rect x="8" y="7" width="4" height="3" rx="1"/></svg>Abastecimento
+      </button>
+      <div class="nav-sec">Análise</div>
+      <button class="ni" onclick="ir('hist',this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>Histórico
+      </button>
+      <button class="ni" onclick="ir('dash',this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="13" width="4" height="8" rx="1"/><rect x="10" y="9" width="4" height="12" rx="1"/><rect x="17" y="5" width="4" height="16" rx="1"/></svg>Dashboard
+      </button>
+      <div class="nav-sec">Config</div>
+      <button class="ni" onclick="ir('cfg',this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Configuração
+      </button>
+    </nav>
+    <div class="sb-foot">
+      <div class="sync"><div class="dot" id="dot"></div><span id="sync-lbl">Verificando...</span></div>
+      <a href="https://docs.google.com/spreadsheets/d/1UgrxSDuczIQrB2LeB4djDHvAjMO247ypSTZCuJGO6gs/edit"
+         target="_blank" style="font-size:11px;color:var(--ac);text-decoration:none;display:block;margin-top:7px">↗ Abrir planilha</a>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- DESLOCAMENTO -->
+    <div id="panel-desl" class="panel on">
+      <div class="ph"><div class="pt">Novo deslocamento</div><div class="ps">Registre o trecho e envie direto à planilha</div></div>
+      <div class="card">
+        <div class="ct">Dados do trecho</div>
+        <div class="fg">
+          <div class="fl"><label>Data</label><input type="date" id="d-dt" class="mono"></div>
+          <div class="fl"><label>Rota (origem / destino)</label><input type="text" id="d-rt" placeholder="Ex: Casa / Empresa"></div>
+          <div class="fl"><label>KM inicial</label><input type="number" id="d-in" placeholder="Ex: 230000" class="mono" oninput="dCalc()"></div>
+          <div class="fl"><label>KM final</label><input type="number" id="d-fn" placeholder="Ex: 230015" class="mono" oninput="dCalc()"></div>
+          <div class="lb"><div class="ll">Distância calculada</div><div class="lv" id="d-lv" style="color:var(--hi)">— km</div></div>
+          <div class="fl"><label>Condutor</label><input type="text" id="d-cd" value="Ricardo"></div>
+          <div class="fl"><label>Placa</label><input type="text" id="d-pl" value="OIC9454" class="mono"></div>
+        </div>
+        <div class="br">
+          <button class="btn" onclick="dClr()">Limpar</button>
+          <button class="btn pri" onclick="salvarDesl()">✓ Salvar no Sheets</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABASTECIMENTO -->
+    <div id="panel-abast" class="panel">
+      <div class="ph"><div class="pt">Abastecimento</div><div class="ps">Registre litros, valor e calcule o consumo</div></div>
+      <div class="card">
+        <div class="ct">Dados do abastecimento</div>
+        <div class="fg fg3">
+          <div class="fl"><label>Data</label><input type="date" id="a-dt" class="mono"></div>
+          <div class="fl"><label>KM no momento</label><input type="number" id="a-km" placeholder="Ex: 230450" class="mono" oninput="aCalc()"></div>
+          <div class="fl"><label>Litros abastecidos</label><input type="number" id="a-lt" placeholder="Ex: 30.5" step="0.1" oninput="aCalc()"></div>
+          <div class="fl"><label>Valor total (R$)</label><input type="number" id="a-vl" placeholder="Ex: 185.00" step="0.01" oninput="aCalc()"></div>
+          <div class="fl"><label>Posto / Local</label><input type="text" id="a-ps" placeholder="Ex: Shell Eusébio"></div>
+          <div class="fl"><label>Placa</label><input type="text" id="a-pl" value="OIC9454" class="mono"></div>
+        </div>
+        <div class="cr">
+          <div class="cb"><div class="cbl">Preço / litro</div><div class="cbv" id="c-pr" style="color:var(--am)">—</div></div>
+          <div class="cb"><div class="cbl">KM desde último abast.</div><div class="cbv" id="c-ds" style="color:var(--ac)">—</div></div>
+          <div class="cb"><div class="cbl">Consumo estimado</div><div class="cbv" id="c-co" style="color:var(--gn)">—</div></div>
+        </div>
+        <div class="br">
+          <button class="btn" onclick="aClr()">Limpar</button>
+          <button class="btn grn" onclick="salvarAbast()">✓ Salvar no Sheets</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div id="panel-hist" class="panel">
+      <div class="ph">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div><div class="pt">Histórico</div><div class="ps">Registros salvos neste navegador</div></div>
+          <button class="btn red" onclick="confirmarLimparTudo()">🗑 Limpar tudo</button>
+        </div>
+      </div>
+
+      <!-- Filtros deslocamentos -->
+      <div class="card">
+        <div class="ct">Deslocamentos</div>
+        <div class="filter-bar">
+          <div class="fl"><label>Filtrar por data</label><input type="date" id="fd-dt" oninput="hist()"></div>
+          <div class="fl"><label>Filtrar por rota</label><input type="text" id="fd-rt" placeholder="Digite parte da rota..." oninput="hist()"></div>
+          <button class="btn" onclick="limparFiltrosD()" style="align-self:flex-end;font-size:12px;padding:7px 12px">✕ Limpar filtros</button>
+        </div>
+        <div class="tw"><table><thead><tr>
+          <th>Data</th><th>Rota</th><th>KM Ini</th><th>KM Fim</th><th>Percurso</th><th>Sheets</th><th></th>
+        </tr></thead><tbody id="tb-d"></tbody></table></div>
+        <div id="fd-count" style="font-size:11.5px;color:var(--mu);margin-top:10px;text-align:right"></div>
+      </div>
+
+      <!-- Filtros abastecimentos -->
+      <div class="card">
+        <div class="ct">Abastecimentos</div>
+        <div class="filter-bar">
+          <div class="fl"><label>Filtrar por data</label><input type="date" id="fa-dt" oninput="hist()"></div>
+          <div class="fl"><label>Filtrar por posto</label><input type="text" id="fa-ps" placeholder="Digite o posto..." oninput="hist()"></div>
+          <button class="btn" onclick="limparFiltrosA()" style="align-self:flex-end;font-size:12px;padding:7px 12px">✕ Limpar filtros</button>
+        </div>
+        <div class="tw"><table><thead><tr>
+          <th>Data</th><th>KM</th><th>Litros</th><th>Valor</th><th>Posto</th><th>km/L</th><th>R$/L</th><th>Sheets</th><th></th>
+        </tr></thead><tbody id="tb-a"></tbody></table></div>
+        <div id="fa-count" style="font-size:11.5px;color:var(--mu);margin-top:10px;text-align:right"></div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="panel-dash" class="panel">
+      <div class="ph"><div class="pt">Dashboard</div><div class="ps">Visão consolidada dos seus registros</div></div>
+      <div class="mrow">
+        <div class="mc bl"><div class="ml">KM registrado</div><div class="mv" id="m1">0</div><div class="mu2">km total</div></div>
+        <div class="mc"><div class="ml">Deslocamentos</div><div class="mv" id="m2">0</div><div class="mu2">registros</div></div>
+        <div class="mc gn"><div class="ml">Litros</div><div class="mv" id="m3">0</div><div class="mu2">abastecidos</div></div>
+        <div class="mc am"><div class="ml">Consumo médio</div><div class="mv" id="m4">—</div><div class="mu2">km/L</div></div>
+        <div class="mc"><div class="ml">Gasto combustível</div><div class="mv" id="m5">R$0</div><div class="mu2">total</div></div>
+      </div>
+      <div class="card"><div class="ct">KM por deslocamento (últimos 15)</div><div class="cw"><canvas id="ch1" role="img" aria-label="KM por deslocamento"></canvas></div></div>
+      <div class="card"><div class="ct">Abastecimentos — litros e consumo</div><div class="cw"><canvas id="ch2" role="img" aria-label="Abastecimentos"></canvas></div></div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="panel-cfg" class="panel">
+      <div class="ph"><div class="pt">Configuração</div><div class="ps">Google Sheets · Apps Script</div></div>
+      <div class="card">
+        <div class="step">
+          <div class="sn">1</div>
+          <div class="sb2"><div class="st">Abra a planilha</div>
+            <a href="https://docs.google.com/spreadsheets/d/1UgrxSDuczIQrB2LeB4djDHvAjMO247ypSTZCuJGO6gs/edit"
+               target="_blank" style="color:var(--ac);font-size:13px">↗ Controle KM - Ricardo (App)</a>
+          </div>
+        </div>
+        <div class="step">
+          <div class="sn">2</div>
+          <div class="sb2"><div class="st">Extensões → Apps Script</div>
+            Apague tudo e cole o código abaixo. Salve com Ctrl+S.
+          </div>
+        </div>
+        <div class="step">
+          <div class="sn">3</div>
+          <div class="sb2"><div class="st">Cole este código</div>
+            <pre class="code" id="sc"></pre>
+            <button class="btn" style="margin-top:8px;font-size:12px" onclick="copiar()">📋 Copiar código</button>
+          </div>
+        </div>
+        <div class="step">
+          <div class="sn">4</div>
+          <div class="sb2"><div class="st">Implantar → Nova implantação</div>
+            Tipo: <strong style="color:var(--tx)">App da Web</strong> · Executar como: <strong style="color:var(--tx)">Eu</strong> · Quem acessa: <strong style="color:var(--tx)">Qualquer pessoa</strong><br>
+            Copie a URL gerada (termina em <code style="font-family:'JetBrains Mono',monospace;font-size:11px">/exec</code>)
+          </div>
+        </div>
+        <div class="step">
+          <div class="sn">5</div>
+          <div class="sb2"><div class="st">Cole a URL e teste</div>
+            <div class="url-row">
+              <input id="url-cfg" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+              <button class="btn pri" onclick="salvarETestar()">Testar e ativar</button>
+            </div>
+            <div id="test-res"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast"><span id="td" style="width:7px;height:7px;border-radius:50%;flex-shrink:0"></span><span id="tm"></span></div>
+
+<script>
+const SID = '1UgrxSDuczIQrB2LeB4djDHvAjMO247ypSTZCuJGO6gs';
+let URL_WA = localStorage.getItem('km_url') || '';
+let desls  = JSON.parse(localStorage.getItem('km_d') || '[]');
+let abasts = JSON.parse(localStorage.getItem('km_a') || '[]');
+let C1=null, C2=null;
+let modalCb = null;
+
+/* ── Apps Script com cores alternadas por dia ── */
+const SCRIPT = `function doPost(e) {
+  try {
+    var data  = JSON.parse(e.postData.contents);
+    var tipo  = data.tipo;
+    var row   = data.linha;
+    var cor   = data.cor; // 'A' ou 'B' para alternar cor por dia
+
+    var ss    = SpreadsheetApp.openById('${SID}');
+    var sheet = ss.getSheetByName(tipo);
+
+    if (!sheet) {
+      sheet = ss.insertSheet(tipo);
+      var cab = tipo === 'Deslocamentos'
+        ? ['Data','Placa','Modelo','Condutor','KM Inicial','KM Final','Rota','KM Percorrido']
+        : ['Data','Placa','KM','Litros','Valor R$','Posto','KM desde último','Consumo km/L','Preço R$/L'];
+      sheet.appendRow(cab);
+      var hr = sheet.getRange(1, 1, 1, cab.length);
+      hr.setBackground('#1565C0');
+      hr.setFontColor('#FFFFFF');
+      hr.setFontWeight('bold');
+      sheet.setFrozenRows(1);
+    }
+
+    sheet.appendRow(row);
+
+    // Colorir linha por dia alternado
+    var lastRow = sheet.getLastRow();
+    var numCols = sheet.getLastColumn();
+    var range   = sheet.getRange(lastRow, 1, 1, numCols);
+
+    // cor A = branco/claro, cor B = azul bem claro
+    var bgColor = (cor === 'B') ? '#DDEEFF' : '#FFFFFF';
+    range.setBackground(bgColor);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: true, row: lastRow }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, err: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet() {
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true, msg: 'Web App ativa!' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+document.getElementById('sc').textContent = SCRIPT;
+
+/* ── Init ── */
+document.getElementById('d-dt').value = hj();
+document.getElementById('a-dt').value = hj();
+if (URL_WA) {
+  document.getElementById('url-auth').value = URL_WA;
+  document.getElementById('url-cfg').value  = URL_WA;
+}
+
+/* ── Auth ── */
+function conectar() {
+  const u = document.getElementById('url-auth').value.trim();
+  if (u && !u.startsWith('https://script.google.com')) {
+    toast('URL inválida — deve começar com https://script.google.com','err'); return;
+  }
+  if (u) { URL_WA = u; localStorage.setItem('km_url', u); document.getElementById('url-cfg').value = u; }
+  entrar();
+  if (u) pingURL();
+}
+function entrarSem() { entrar(); setSt('none','Sem sincronização'); }
+function entrar() {
+  document.getElementById('auth').style.display = 'none';
+  document.getElementById('app').style.display  = 'grid';
+  if (URL_WA) setSt('ok','Sheets conectado'); else setSt('none','Sem URL configurada');
+}
+
+/* ── Nav ── */
+function ir(nome, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'));
+  document.getElementById('panel-' + nome).classList.add('on');
+  if (btn) btn.classList.add('on');
+  if (nome === 'dash') dash();
+  if (nome === 'hist') hist();
+}
+
+/* ── Helpers ── */
+function hj() { return new Date().toISOString().slice(0,10); }
+function br(d) { if(!d)return''; const[y,m,dd]=d.split('-'); return `${dd}/${m}/${y}`; }
+function sv() { localStorage.setItem('km_d',JSON.stringify(desls)); localStorage.setItem('km_a',JSON.stringify(abasts)); }
+function ultKm() { return abasts.length ? [...abasts].sort((a,b)=>a.dt.localeCompare(b.dt)).slice(-1)[0].km : null; }
+
+/* ── Cor alternada por data ──
+   Pega todas as datas únicas ordenadas e alterna A/B */
+function corPorData(tipo, data) {
+  const arr = tipo === 'D' ? desls : abasts;
+  const datas = [...new Set(arr.map(r => r.dt))].sort();
+  const idx   = datas.indexOf(data);
+  return idx % 2 === 0 ? 'A' : 'B';
+}
+
+/* ── Live calc ── */
+function dCalc() {
+  const i=parseInt(document.getElementById('d-in').value), f=parseInt(document.getElementById('d-fn').value), el=document.getElementById('d-lv');
+  if(!isNaN(i)&&!isNaN(f)&&f>i){el.textContent=(f-i)+' km';el.style.color='var(--gn)'}
+  else if(!isNaN(i)&&!isNaN(f)){el.textContent='KM final deve ser maior';el.style.color='var(--rd)'}
+  else{el.textContent='— km';el.style.color='var(--hi)'}
+}
+function aCalc() {
+  const km=parseInt(document.getElementById('a-km').value), l=parseFloat(document.getElementById('a-lt').value), v=parseFloat(document.getElementById('a-vl').value);
+  document.getElementById('c-pr').textContent=(!isNaN(v)&&!isNaN(l)&&l>0)?'R$ '+(v/l).toFixed(2):'—';
+  const u=ultKm();
+  if(!isNaN(km)&&u&&km>u){const d=km-u;document.getElementById('c-ds').textContent=d+' km';document.getElementById('c-co').textContent=(!isNaN(l)&&l>0)?(d/l).toFixed(1)+' km/L':'—';}
+  else{document.getElementById('c-ds').textContent='—';document.getElementById('c-co').textContent='—';}
+}
+
+/* ── Salvar ── */
+async function salvarDesl() {
+  const dt=document.getElementById('d-dt').value, rt=document.getElementById('d-rt').value.trim(),
+        ini=parseInt(document.getElementById('d-in').value), fim=parseInt(document.getElementById('d-fn').value),
+        cd=document.getElementById('d-cd').value.trim()||'Ricardo', pl=document.getElementById('d-pl').value.trim()||'OIC9454';
+  if(!dt||!rt||isNaN(ini)||isNaN(fim)||fim<=ini){toast('Preencha todos os campos corretamente','err');return;}
+  const km=fim-ini;
+  const reg={id:Date.now(),dt,rt,ini,fim,km,cd,pl,ok:false};
+  desls.push(reg); sv(); toast('Deslocamento salvo — '+km+' km'); dClr();
+  const cor = corPorData('D', dt);
+  const ok = await post('Deslocamentos',[dt,pl,'FORD/FIESTA',cd,ini,fim,rt,km], cor);
+  const i=desls.findIndex(r=>r.id===reg.id); if(i>=0){desls[i].ok=ok;sv();}
+}
+async function salvarAbast() {
+  const dt=document.getElementById('a-dt').value, km=parseInt(document.getElementById('a-km').value),
+        l=parseFloat(document.getElementById('a-lt').value), v=parseFloat(document.getElementById('a-vl').value)||0,
+        ps=document.getElementById('a-ps').value.trim()||'-', pl=document.getElementById('a-pl').value.trim()||'OIC9454';
+  if(!dt||isNaN(km)||isNaN(l)||l<=0){toast('Preencha ao menos data, KM e litros','err');return;}
+  const u=ultKm(), ds=(u&&km>u)?km-u:0, co=(ds>0&&l>0)?+(ds/l).toFixed(2):0, pr=(v>0&&l>0)?+(v/l).toFixed(3):0;
+  const reg={id:Date.now(),dt,km,l,v,ps,pl,ds,co,pr,ok:false};
+  abasts.push(reg); sv(); toast('Abastecimento salvo — '+l.toFixed(1)+'L'); aClr();
+  const cor = corPorData('A', dt);
+  const ok = await post('Abastecimentos',[dt,pl,km,l,v,ps,ds,co,pr], cor);
+  const i=abasts.findIndex(r=>r.id===reg.id); if(i>=0){abasts[i].ok=ok;sv();}
+}
+
+/* ── POST ── */
+async function post(tipo, linha, cor) {
+  if(!URL_WA){toast('⚠ Cole a URL do Apps Script em Configuração','warn');return false;}
+  setSt('spin','Enviando...');
+  try {
+    const r = await fetch(URL_WA,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo,linha,cor})});
+    const j = await r.json();
+    if(j.ok){setSt('ok','Sheets atualizado ✓');toast('✓ Linha '+j.row+' gravada no Sheets!');return true;}
+    else throw new Error(j.err||'Resposta inesperada');
+  } catch(e) {
+    console.error(e); setSt('err','Erro: '+e.message.slice(0,50));
+    toast('Erro Sheets: '+e.message.slice(0,60),'err'); return false;
+  }
+}
+
+/* ── Ping ── */
+async function pingURL() {
+  if(!URL_WA)return; setSt('spin','Testando...');
+  try{const r=await fetch(URL_WA);const j=await r.json();if(j.ok)setSt('ok','Sheets conectado ✓');else throw new Error();}
+  catch(e){setSt('err','Falha de conexão');}
+}
+
+/* ── Config URL ── */
+async function salvarETestar() {
+  const u=document.getElementById('url-cfg').value.trim(), res=document.getElementById('test-res');
+  if(!u.startsWith('https://script.google.com')){res.textContent='URL inválida.';res.style.color='var(--rd)';return;}
+  URL_WA=u; localStorage.setItem('km_url',u); document.getElementById('url-auth').value=u;
+  res.textContent='Testando...'; res.style.color='var(--mu)';
+  try{const r=await fetch(u);const j=await r.json();if(j.ok){res.textContent='✓ '+j.msg;res.style.color='var(--gn)';setSt('ok','Sheets conectado');toast('✓ Conexão confirmada!');}else throw new Error(JSON.stringify(j));}
+  catch(e){res.textContent='Erro: '+e.message;res.style.color='var(--rd)';setSt('err','Erro de conexão');}
+}
+
+/* ── Limpar forms ── */
+function dClr(){['d-rt','d-in','d-fn'].forEach(id=>document.getElementById(id).value='');document.getElementById('d-dt').value=hj();document.getElementById('d-lv').textContent='— km';document.getElementById('d-lv').style.color='var(--hi)';}
+function aClr(){['a-km','a-lt','a-vl','a-ps'].forEach(id=>document.getElementById(id).value='');document.getElementById('a-dt').value=hj();['c-pr','c-ds','c-co'].forEach(id=>document.getElementById(id).textContent='—');}
+function limparFiltrosD(){document.getElementById('fd-dt').value='';document.getElementById('fd-rt').value='';hist();}
+function limparFiltrosA(){document.getElementById('fa-dt').value='';document.getElementById('fa-ps').value='';hist();}
+
+/* ── Apagar registro individual ── */
+function apagarDesl(id) {
+  abrirModal('Apagar deslocamento','Tem certeza? O registro será removido do histórico local (não da planilha).', () => {
+    desls = desls.filter(r => r.id !== id); sv(); hist(); toast('Deslocamento removido');
+  });
+}
+function apagarAbast(id) {
+  abrirModal('Apagar abastecimento','Tem certeza? O registro será removido do histórico local (não da planilha).', () => {
+    abasts = abasts.filter(r => r.id !== id); sv(); hist(); toast('Abastecimento removido');
+  });
+}
+function confirmarLimparTudo() {
+  abrirModal('Limpar todos os registros','Isso apagará TODOS os deslocamentos e abastecimentos do histórico local. A planilha online não será afetada.', () => {
+    desls=[]; abasts=[]; sv(); hist(); toast('Histórico local limpo');
+  });
+}
+
+/* ── Modal ── */
+function abrirModal(titulo, sub, cb) {
+  document.getElementById('modal-title').textContent = titulo;
+  document.getElementById('modal-sub').textContent   = sub;
+  document.getElementById('modal').classList.add('on');
+  modalCb = cb;
+  document.getElementById('modal-ok').onclick = () => { fecharModal(); if(modalCb) modalCb(); };
+}
+function fecharModal() { document.getElementById('modal').classList.remove('on'); modalCb=null; }
+document.getElementById('modal').addEventListener('click', e => { if(e.target===document.getElementById('modal')) fecharModal(); });
+
+/* ── Histórico com filtros ── */
+function hist() {
+  /* deslocamentos */
+  const fDt = document.getElementById('fd-dt').value;
+  const fRt = document.getElementById('fd-rt').value.toLowerCase();
+  let filtD = [...desls].reverse();
+  if(fDt) filtD = filtD.filter(d => d.dt === fDt);
+  if(fRt) filtD = filtD.filter(d => d.rt.toLowerCase().includes(fRt));
+
+  const tb = document.getElementById('tb-d');
+  tb.innerHTML = filtD.length === 0
+    ? '<tr><td colspan="7" style="text-align:center;color:var(--hi);padding:1.5rem">Nenhum registro encontrado</td></tr>'
+    : filtD.map(d => `<tr>
+        <td class="mono" style="font-size:12px">${br(d.dt)}</td>
+        <td>${d.rt}</td>
+        <td class="mono" style="font-size:12px">${d.ini.toLocaleString('pt-BR')}</td>
+        <td class="mono" style="font-size:12px">${d.fim.toLocaleString('pt-BR')}</td>
+        <td><span class="tag tbl">${d.km} km</span></td>
+        <td>${d.ok?'<span class="tag tgn">✓ Sheets</span>':'<span class="tag tam">Local</span>'}</td>
+        <td><button class="del-btn" onclick="apagarDesl(${d.id})" title="Apagar">🗑</button></td>
+      </tr>`).join('');
+  document.getElementById('fd-count').textContent = `${filtD.length} de ${desls.length} registro(s)`;
+
+  /* abastecimentos */
+  const fADt = document.getElementById('fa-dt').value;
+  const fAPs = document.getElementById('fa-ps').value.toLowerCase();
+  let filtA = [...abasts].reverse();
+  if(fADt) filtA = filtA.filter(a => a.dt === fADt);
+  if(fAPs) filtA = filtA.filter(a => a.ps.toLowerCase().includes(fAPs));
+
+  const ta = document.getElementById('tb-a');
+  ta.innerHTML = filtA.length === 0
+    ? '<tr><td colspan="9" style="text-align:center;color:var(--hi);padding:1.5rem">Nenhum registro encontrado</td></tr>'
+    : filtA.map(a => `<tr>
+        <td class="mono" style="font-size:12px">${br(a.dt)}</td>
+        <td class="mono" style="font-size:12px">${a.km.toLocaleString('pt-BR')}</td>
+        <td class="mono">${a.l.toFixed(1)}L</td>
+        <td class="mono">${a.v>0?'R$'+a.v.toFixed(2):'—'}</td>
+        <td>${a.ps}</td>
+        <td class="mono" style="color:var(--gn)">${a.co>0?a.co.toFixed(1):'—'}</td>
+        <td class="mono" style="color:var(--am)">${a.pr>0?'R$'+a.pr.toFixed(2):'—'}</td>
+        <td>${a.ok?'<span class="tag tgn">✓ Sheets</span>':'<span class="tag tam">Local</span>'}</td>
+        <td><button class="del-btn" onclick="apagarAbast(${a.id})" title="Apagar">🗑</button></td>
+      </tr>`).join('');
+  document.getElementById('fa-count').textContent = `${filtA.length} de ${abasts.length} registro(s)`;
+}
+
+/* ── Dashboard ── */
+function dash() {
+  const tKm=desls.reduce((s,d)=>s+d.km,0), tL=abasts.reduce((s,a)=>s+a.l,0), tV=abasts.reduce((s,a)=>s+a.v,0);
+  const cs=abasts.filter(a=>a.co>0), med=cs.length?cs.reduce((s,a)=>s+a.co,0)/cs.length:0;
+  document.getElementById('m1').textContent=tKm.toLocaleString('pt-BR');
+  document.getElementById('m2').textContent=desls.length;
+  document.getElementById('m3').textContent=tL.toFixed(1);
+  document.getElementById('m4').textContent=med>0?med.toFixed(1):'—';
+  document.getElementById('m5').textContent=tV>0?'R$'+Math.round(tV):'R$0';
+  if(C1){C1.destroy();C1=null;}if(C2){C2.destroy();C2=null;}
+  const tc='#555562',gc='rgba(255,255,255,.05)';
+  if(desls.length){
+    const last=[...desls].slice(-15);
+    C1=new Chart(document.getElementById('ch1'),{type:'bar',
+      data:{labels:last.map(d=>br(d.dt)),datasets:[{label:'km',data:last.map(d=>d.km),backgroundColor:'rgba(59,130,246,.6)',borderColor:'#3b82f6',borderWidth:1,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:{size:10},maxRotation:35},grid:{color:gc}},y:{ticks:{color:tc,font:{size:11}},grid:{color:gc}}}}});
+  }
+  if(abasts.length){
+    const ord=[...abasts].sort((a,b)=>a.dt.localeCompare(b.dt)).slice(-10);
+    C2=new Chart(document.getElementById('ch2'),{type:'line',
+      data:{labels:ord.map(a=>br(a.dt)),datasets:[
+        {label:'Litros',data:ord.map(a=>a.l),borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.1)',pointBackgroundColor:'#22c55e',tension:.3,yAxisID:'y'},
+        {label:'km/L',data:ord.map(a=>a.co||null),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.08)',pointBackgroundColor:'#f59e0b',tension:.3,borderDash:[4,3],yAxisID:'y1'}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{ticks:{color:tc,font:{size:11}},grid:{color:gc}},y:{ticks:{color:tc,font:{size:11}},grid:{color:gc}},y1:{position:'right',ticks:{color:tc,font:{size:11}},grid:{display:false}}}}});
+  }
+}
+
+/* ── UI ── */
+let tT;
+function toast(msg,t='ok'){clearTimeout(tT);const cols={ok:'#22c55e',err:'#ef4444',warn:'#f59e0b'};document.getElementById('td').style.background=cols[t]||cols.ok;document.getElementById('tm').textContent=msg;document.getElementById('toast').classList.add('on');tT=setTimeout(()=>document.getElementById('toast').classList.remove('on'),3500);}
+function setSt(s,l){const d=document.getElementById('dot'),lb=document.getElementById('sync-lbl');d.className='dot';if(s==='ok')d.classList.add('ok');else if(s==='spin')d.classList.add('spin');else if(s==='err')d.classList.add('err');lb.textContent=l;}
+function copiar(){navigator.clipboard.writeText(SCRIPT).then(()=>toast('Código copiado!'));}
+</script>
+</body>
+</html>
