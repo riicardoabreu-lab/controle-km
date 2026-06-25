@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>index · OIC-9454</title>
+<title>Controle KM · OIC-9454</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
@@ -218,6 +218,9 @@ pre.code{background:var(--bg);border:1px solid var(--b2);border-radius:8px;paddi
       <button class="ni" onclick="ir('cfg',this)">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Configuração
       </button>
+      <button class="ni" onclick="ir('senha',this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Mudar senha
+      </button>
     </nav>
     <div class="sb-foot">
       <div class="sync"><div class="dot" id="dot"></div><span id="sync-lbl">Verificando...</span></div>
@@ -396,6 +399,49 @@ pre.code{background:var(--bg);border:1px solid var(--b2);border-radius:8px;paddi
       </div>
     </div>
 
+
+    <!-- SENHA -->
+    <div id="panel-senha" class="panel">
+      <div class="ph"><div class="pt">Mudar senha</div><div class="ps">Digite a senha atual para confirmar a troca</div></div>
+      <div class="card" style="max-width:420px">
+        <div class="ct">Nova senha</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="fl">
+            <label>Senha atual</label>
+            <div style="position:relative">
+              <input type="password" id="s-atual" placeholder="Digite a senha atual"
+                style="background:var(--bg);border:1px solid var(--b2);border-radius:var(--r);padding:9px 40px 9px 12px;font-size:13px;color:var(--tx);outline:none;width:100%"
+                onkeydown="if(event.key==='Enter')document.getElementById('s-nova').focus()">
+              <button onclick="toggleCampo('s-atual',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--mu);font-size:15px">👁</button>
+            </div>
+          </div>
+          <div class="fl">
+            <label>Nova senha</label>
+            <div style="position:relative">
+              <input type="password" id="s-nova" placeholder="Digite a nova senha"
+                style="background:var(--bg);border:1px solid var(--b2);border-radius:var(--r);padding:9px 40px 9px 12px;font-size:13px;color:var(--tx);outline:none;width:100%"
+                onkeydown="if(event.key==='Enter')document.getElementById('s-conf').focus()">
+              <button onclick="toggleCampo('s-nova',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--mu);font-size:15px">👁</button>
+            </div>
+          </div>
+          <div class="fl">
+            <label>Confirmar nova senha</label>
+            <div style="position:relative">
+              <input type="password" id="s-conf" placeholder="Repita a nova senha"
+                style="background:var(--bg);border:1px solid var(--b2);border-radius:var(--r);padding:9px 40px 9px 12px;font-size:13px;color:var(--tx);outline:none;width:100%"
+                onkeydown="if(event.key==='Enter')trocarSenha()">
+              <button onclick="toggleCampo('s-conf',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--mu);font-size:15px">👁</button>
+            </div>
+          </div>
+          <div id="s-msg" style="font-size:12px;min-height:16px;display:none;padding:8px 12px;border-radius:var(--r)"></div>
+        </div>
+        <div class="br">
+          <button class="btn" onclick="limparSenha()">Limpar</button>
+          <button class="btn pri" onclick="trocarSenha()">🔐 Confirmar troca</button>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -420,6 +466,10 @@ pre.code{background:var(--bg);border:1px solid var(--b2);border-radius:8px;paddi
     <button class="bni" id="bni-cfg" onclick="irM('cfg',this)">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       <span>Config</span>
+    </button>
+    <button class="bni" id="bni-senha" onclick="irM('senha',this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      <span>Senha</span>
     </button>
   </div>
 </nav>
@@ -503,7 +553,10 @@ function fazerLogin() {
   const user = document.getElementById('login-user').value.trim().toLowerCase();
   const pass = document.getElementById('login-pass').value;
   const erro = document.getElementById('login-erro');
-  if (USUARIOS[user] && USUARIOS[user] === pass) {
+  const senhaArmazenada = localStorage.getItem('km_senha_' + user);
+  const senhaValida = senhaArmazenada !== null ? senhaArmazenada : USUARIOS[user];
+  if (USUARIOS[user] !== undefined && pass === senhaValida) {
+    localStorage.setItem('km_usuario', user);
     erro.style.display = 'none';
     document.getElementById('login').style.display = 'none';
     // se já tem URL salva, vai direto pro app
@@ -522,6 +575,59 @@ function fazerLogin() {
 function toggleSenha() {
   const inp = document.getElementById('login-pass');
   inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+function toggleCampo(id, btn) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+/* ── Mudar senha ── */
+function trocarSenha() {
+  const atual = document.getElementById('s-atual').value;
+  const nova  = document.getElementById('s-nova').value;
+  const conf  = document.getElementById('s-conf').value;
+  const msg   = document.getElementById('s-msg');
+
+  const user = localStorage.getItem('km_usuario') || 'ricardo';
+  const senhaAtual = localStorage.getItem('km_senha_' + user) || 'infolink2024';
+
+  msg.style.display = 'block';
+
+  if (!atual || !nova || !conf) {
+    msg.textContent = 'Preencha todos os campos.';
+    msg.style.background = 'var(--rd2)'; msg.style.color = 'var(--rd)'; return;
+  }
+  if (atual !== senhaAtual) {
+    msg.textContent = 'Senha atual incorreta.';
+    msg.style.background = 'var(--rd2)'; msg.style.color = 'var(--rd)';
+    document.getElementById('s-atual').value = '';
+    document.getElementById('s-atual').focus(); return;
+  }
+  if (nova.length < 4) {
+    msg.textContent = 'A nova senha deve ter ao menos 4 caracteres.';
+    msg.style.background = 'var(--rd2)'; msg.style.color = 'var(--rd)'; return;
+  }
+  if (nova !== conf) {
+    msg.textContent = 'A confirmação não bate com a nova senha.';
+    msg.style.background = 'var(--rd2)'; msg.style.color = 'var(--rd)';
+    document.getElementById('s-conf').value = '';
+    document.getElementById('s-conf').focus(); return;
+  }
+  localStorage.setItem('km_senha_' + user, nova);
+  msg.textContent = '✓ Senha alterada com sucesso!';
+  msg.style.background = 'var(--gn2)'; msg.style.color = 'var(--gn)';
+  setTimeout(() => limparSenha(), 2000);
+  toast('Senha alterada com sucesso!');
+}
+function limparSenha() {
+  ['s-atual','s-nova','s-conf'].forEach(id => {
+    document.getElementById(id).value = '';
+    document.getElementById(id).type = 'password';
+  });
+  const msg = document.getElementById('s-msg');
+  msg.style.display = 'none';
+  msg.textContent = '';
 }
 
 /* ── Auth ── */
