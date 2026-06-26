@@ -156,7 +156,11 @@ pre.code{background:var(--bg);border:1px solid var(--b2);border-radius:8px;paddi
       <input id="login-user" type="text" placeholder="Usuário" autocomplete="username"
         style="background:var(--bg);border:1px solid var(--b2);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--tx);font-family:'Inter',sans-serif;outline:none;width:100%">
       <div style="position:relative">
-        <input id="login-pass" type="password" placeholder="Senha" autocomplete="current-password"
+        <input id="login-pass" type="password" placeholder="Senha" 
+  autocomplete="current-password"
+  autocapitalize="none"
+  autocorrect="off"
+  spellcheck="false"
           style="background:var(--bg);border:1px solid var(--b2);border-radius:10px;padding:11px 42px 11px 14px;font-size:14px;color:var(--tx);font-family:'Inter',sans-serif;outline:none;width:100%"
           onkeydown="if(event.key==='Enter')fazerLogin()">
         <button onclick="toggleSenha()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--mu);font-size:16px;padding:0">👁</button>
